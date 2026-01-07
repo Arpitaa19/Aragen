@@ -171,24 +171,20 @@ bioinsight_hackathon2/
 
 ## Screenshots
 
-### 1. Home Page
-![Home Page](screenshots/home.png)
-*Landing page with project overview and navigation*
-
-### 2. Model Prediction
-![Model Prediction](screenshots/prediction.png)
+### 1. Model Prediction
+![Model Prediction](screenshots/ModelPrediction.png)
 *Single compound prediction interface with confidence scores*
 
-### 3. Exploratory Data Analysis
-![EDA](screenshots/eda.png)
+### 2. Exploratory Data Analysis
+![EDA](screenshots/EDA.png)
 *Interactive data visualizations and distributions*
 
-### 4. SHAP Explainability
-![SHAP](screenshots/shap.png)
-*Feature importance analysis using SHAP values*
+### 3. Dataset Search
+![Dataset Search](screenshots/GuidedDatasetSearch.png)
+*Filter compounds and view real-time predictions*
 
-### 5. Model Evaluation
-![Evaluation](screenshots/evaluation.png)
+### 4. Model Evaluation
+![Evaluation](screenshots/Model%20Evaluation%20Metrics.png)
 *Performance metrics comparison (LogReg vs XGBoost)*
 
 ---
