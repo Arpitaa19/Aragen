@@ -32,14 +32,6 @@ Interactive web application with the following modules:
 python3 -m streamlit run ui/Home.py
 ```
 
-### 3. README Documentation
-This file contains:
-- Methodology and approach
-- Model performance metrics
-- Installation instructions
-- Project architecture
-
----
 
 ## Methodology
 
