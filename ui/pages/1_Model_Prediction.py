@@ -1,6 +1,6 @@
 """
-Single Compound Prediction Page
-User inputs compound properties and gets instant bioactivity prediction
+Module: Single Compound Prediction
+Real-time bioactivity inference using the trained XGBoost model.
 """
 import streamlit as st
 import pandas as pd
@@ -8,11 +8,11 @@ import numpy as np
 import sys
 from pathlib import Path
 
-# Add parent directory to path
+# Add parent directory to path for utils
 sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.model_loader import get_model_loader
-from utils.preprocessing import get_feature_ranges, get_confidence_level
+from utils.preprocessing import get_feature_ranges, get_confidence_level, preprocess_input
 
 # Page config
 st.set_page_config(page_title="Model Prediction", page_icon=None, layout="wide")
@@ -20,7 +20,9 @@ st.set_page_config(page_title="Model Prediction", page_icon=None, layout="wide")
 st.title("Model Prediction")
 st.markdown("Enter compound properties to predict whether it will be **active** or **inactive**.")
 
-# Load models
+# -------------------------------------------------------------------------
+# Load Resources (Cached)
+# -------------------------------------------------------------------------
 @st.cache_resource
 def load_models():
     loader = get_model_loader()
@@ -33,10 +35,12 @@ except Exception as e:
     st.error(f"❌ Error loading model: {e}")
     st.stop()
 
-# Get feature ranges
+# Get validation ranges for inputs
 ranges = get_feature_ranges()
 
-# Create input form
+# -------------------------------------------------------------------------
+# Input Form
+# -------------------------------------------------------------------------
 st.markdown("---")
 st.subheader("Enter Compound Properties")
 
@@ -44,101 +48,59 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     st.markdown("**Physical Properties**")
-    mw_freebase = st.number_input(
-        "Molecular Weight (Da)",
-        min_value=float(ranges['mw_freebase']['min']),
-        max_value=float(ranges['mw_freebase']['max']),
-        value=float(ranges['mw_freebase']['default']),
-        step=float(ranges['mw_freebase']['step'])
-    )
-    
-    alogp = st.number_input(
-        "LogP (Lipophilicity)",
-        min_value=float(ranges['alogp']['min']),
-        max_value=float(ranges['alogp']['max']),
-        value=float(ranges['alogp']['default']),
-        step=float(ranges['alogp']['step'])
-    )
-    
-    psa = st.number_input(
-        "Polar Surface Area (Ų)",
-        min_value=float(ranges['psa']['min']),
-        max_value=float(ranges['psa']['max']),
-        value=float(ranges['psa']['default']),
-        step=float(ranges['psa']['step'])
-    )
+    mw_freebase = st.number_input("Molecular Weight", value=float(ranges['mw_freebase']['default']), step=1.0)
+    alogp = st.number_input("LogP", value=float(ranges['alogp']['default']), step=0.1)
+    psa = st.number_input("Polar Surface Area", value=float(ranges['psa']['default']), step=1.0)
 
 with col2:
     st.markdown("**Hydrogen Bonding**")
-    hba = st.number_input("H-Bond Acceptors", min_value=0, max_value=20, value=5, step=1)
-    hbd = st.number_input("H-Bond Donors", min_value=0, max_value=10, value=2, step=1)
-    rtb = st.number_input("Rotatable Bonds", min_value=0, max_value=30, value=5, step=1)
+    hba = st.number_input("H-Bond Acceptors", value=5, step=1)
+    hbd = st.number_input("H-Bond Donors", value=2, step=1)
+    rtb = st.number_input("Rotatable Bonds", value=5, step=1)
 
 with col3:
     st.markdown("**Structural Features**")
-    aromatic_rings = st.number_input("Aromatic Rings", min_value=0, max_value=10, value=2, step=1)
-    heavy_atoms = st.number_input("Heavy Atoms", min_value=5, max_value=100, value=25, step=1)
-    qed_weighted = st.slider("QED Score", min_value=0.0, max_value=1.0, value=0.5, step=0.01)
+    aromatic_rings = st.number_input("Aromatic Rings", value=2, step=1)
+    heavy_atoms = st.number_input("Heavy Atoms", value=25, step=1)
+    qed_weighted = st.slider("QED Score", 0.0, 1.0, 0.5)
 
 st.markdown("---")
 
-# Predict button
+# -------------------------------------------------------------------------
+# Prediction Logic
+# -------------------------------------------------------------------------
 if st.button("Predict Bioactivity", type="primary", use_container_width=True):
-    
-    # Prepare input
+    # Prepare input dictionary
     input_dict = {
-        'mw_freebase': mw_freebase,
-        'alogp': alogp,
-        'hba': hba,
-        'hbd': hbd,
-        'psa': psa,
-        'rtb': rtb,
-        'aromatic_rings': aromatic_rings,
-        'heavy_atoms': heavy_atoms,
-        'qed_weighted': qed_weighted,
-        'num_ro5_violations': 0 # Will be recalculated if needed or aliased
+        'mw_freebase': mw_freebase, 'alogp': alogp, 'hba': hba, 'hbd': hbd,
+        'psa': psa, 'rtb': rtb, 'aromatic_rings': aromatic_rings,
+        'heavy_atoms': heavy_atoms, 'qed_weighted': qed_weighted, 'num_ro5_violations': 0
     }
     
     try:
-        # Centralized Robust Preprocessing
-        from utils.preprocessing import preprocess_input
+        # Preprocess and Predict
         X_scaled = preprocess_input(input_dict, scaler, encoders)
-        
-        # Predict
         prediction = model.predict(X_scaled)[0]
-        probability = model.predict_proba(X_scaled)[0]
-        prob_inactive = probability[0]
-        prob_active = probability[1]
+        probs = model.predict_proba(X_scaled)[0]
+        prob_active = probs[1]
         
-        # Display results
+        # Display Results
         st.markdown("---")
-        st.subheader("📊 Prediction Results")
+        st.subheader("Prediction Results")
         
         col1, col2, col3 = st.columns(3)
         
         with col1:
             if prediction == 1:
-                st.success(f"### ACTIVE\n**Probability:** {prob_active*100:.1f}%")
+                st.success(f"### Active\n**Probability:** {prob_active*100:.1f}%")
             else:
-                st.error(f"### INACTIVE\n**Probability:** {prob_inactive*100:.1f}%")
+                st.error(f"### Inactive\n**Probability:** {probs[0]*100:.1f}%")
         
         with col2:
-            confidence = get_confidence_level(prob_active)
-            st.info(f"### Confidence: {confidence}")
+            st.info(f"### Confidence\n**Level:** {get_confidence_level(prob_active)}")
         
         with col3:
-            st.metric("Model", "XGBoost", delta="ROC-AUC: 0.824")
-        
-        # Probability chart
-        st.bar_chart(pd.DataFrame({
-            'Inactive': [prob_inactive],
-            'Active': [prob_active]
-        }))
-        
-
+            st.info("### Model\n**ROC-AUC:** 0.824")
         
     except Exception as e:
-        st.error(f" Prediction failed: {e}")
-
-# Sidebar
-
+        st.error(f"Prediction failed: {e}")

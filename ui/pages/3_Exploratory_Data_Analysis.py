@@ -28,8 +28,7 @@ with tab1:
     st.markdown("#### Sample Data")
     st.dataframe(df.head(50), use_container_width=True)
 
-    st.markdown("#### Descriptive Statistics")
-    st.dataframe(df.describe(), use_container_width=True)
+
 
 
 
