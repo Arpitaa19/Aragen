@@ -65,12 +65,20 @@ def preprocess_data(df, scaler, encoders):
     # Filter to only columns that exist in the current DataFrame
     available_cols = [col for col in numeric_cols if col in df.columns]
     
-    # If scaler expects more columns than we have, we need to add them with defaults
+    # If scaler expects more columns than we have, add them with defaults
     for col in numeric_cols:
         if col not in df.columns:
             df[col] = DEFAULTS.get(col, 0)
     
-    return scaler.transform(df[numeric_cols])
+    # Select only numeric columns (exclude any categorical columns that might have slipped through)
+    df_numeric = df[numeric_cols].select_dtypes(include=[np.number])
+    
+    # If some columns were filtered out as non-numeric, fill them with defaults
+    for col in numeric_cols:
+        if col not in df_numeric.columns:
+            df_numeric[col] = DEFAULTS.get(col, 0)
+    
+    return scaler.transform(df_numeric)
 
 def preprocess_input(input_dict, scaler, encoders):
     """Pipeline for single dictionary input."""
