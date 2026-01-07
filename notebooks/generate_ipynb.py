@@ -1,0 +1,150 @@
+import json
+import os
+
+os.makedirs('notebooks', exist_ok=True)
+
+cells = [
+    {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": [
+            "# BioInsight Lite: End-to-End Workflow\n",
+            "This notebook covers Data Loading, EDA, Preprocessing, Modeling (LogReg, XGBoost), and Evaluation."
+        ]
+    },
+    {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": ["## 1. Setup and Data Loading"]
+    },
+    {
+        "cell_type": "code",
+        "execution_count": None,
+        "metadata": {},
+        "outputs": [],
+        "source": [
+            "import pandas as pd\n",
+            "import numpy as np\n",
+            "import matplotlib.pyplot as plt\n",
+            "import seaborn as sns\n",
+            "from sklearn.model_selection import train_test_split\n",
+            "from sklearn.linear_model import LogisticRegression\n",
+            "from sklearn.metrics import accuracy_score, roc_auc_score, classification_report\n",
+            "import xgboost as xgb\n",
+            "\n",
+            "# Load Data\n",
+            "try:\n",
+            "    df = pd.read_csv('../data/sample_bioactivity.csv')\n",
+            "    print(f\"Loaded {df.shape}\")\n",
+            "except:\n",
+            "    print(\"Data not found, check path\")"
+        ]
+    },
+    {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": ["## 2. Exploratory Data Analysis (EDA)"]
+    },
+    {
+        "cell_type": "code",
+        "execution_count": None,
+        "metadata": {},
+        "outputs": [],
+        "source": [
+            "print(df['is_active'].value_counts())\n",
+            "sns.countplot(x='is_active', data=df)\n",
+            "plt.title('Class Distribution')\n",
+            "plt.show()"
+        ]
+    },
+    {
+        "cell_type": "code",
+        "execution_count": None,
+        "metadata": {},
+        "outputs": [],
+        "source": [
+            "plt.figure(figsize=(10,6))\n",
+            "sns.histplot(df, x='mw_freebase', hue='is_active', kde=True)\n",
+            "plt.title('Molecular Weight Distribution by Activity')\n",
+            "plt.show()"
+        ]
+    },
+    {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": ["## 3. Modeling"]
+    },
+    {
+        "cell_type": "code",
+        "execution_count": None,
+        "metadata": {},
+        "outputs": [],
+        "source": [
+            "# Preprocessing\n",
+            "drop_cols = ['activity_id', 'assay_id', 'is_active', 'pchembl_value', \n",
+            "             'confidence_score', 'standard_type', 'target_type', 'organism']\n",
+            "X = df.drop(columns=[c for c in drop_cols if c in df.columns], errors='ignore')\n",
+            "X = X.select_dtypes(include=[np.number])\n",
+            "y = df['is_active']\n",
+            "\n",
+            "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n",
+            "print(f\"Train shape: {X_train.shape}\")"
+        ]
+    },
+    {
+        "cell_type": "code",
+        "execution_count": None,
+        "metadata": {},
+        "outputs": [],
+        "source": [
+            "# Logistic Regression\n",
+            "lr = LogisticRegression(max_iter=1000)\n",
+            "lr.fit(X_train, y_train)\n",
+            "lr_preds = lr.predict_proba(X_test)[:,1]\n",
+            "print(f\"Logistic Regression AUC: {roc_auc_score(y_test, lr_preds):.4f}\")"
+        ]
+    },
+    {
+        "cell_type": "code",
+        "execution_count": None,
+        "metadata": {},
+        "outputs": [],
+        "source": [
+            "# XGBoost\n",
+            "xgb_model = xgb.XGBClassifier(eval_metric='logloss')\n",
+            "xgb_model.fit(X_train, y_train)\n",
+            "xgb_preds = xgb_model.predict_proba(X_test)[:,1]\n",
+            "print(f\"XGBoost AUC: {roc_auc_score(y_test, xgb_preds):.4f}\")"
+        ]
+    }
+]
+
+notebook = {
+    "cells": cells,
+    "metadata": {
+        "kernelspec": {
+            "display_name": "Python 3",
+            "language": "python",
+            "name": "python3"
+        },
+        "language_info": {
+            "codemirror_mode": {
+                "name": "ipython",
+                "version": 3
+            },
+            "file_extension": ".py",
+            "mimetype": "text/x-python",
+            "name": "python",
+            "nbconvert_exporter": "python",
+            "pygments_lexer": "ipython3",
+            "version": "3.8.5"
+        }
+    },
+    "nbformat": 4,
+    "nbformat_minor": 4
+}
+
+with open('notebooks/01_workflow.ipynb', 'w') as f:
+    json.dump(notebook, f, indent=1)
+
+print("Notebook generated: notebooks/01_workflow.ipynb")

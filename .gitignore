@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+.env
+
+# MacOS
+.DS_Store
+
+# Data (Exclude raw data if too large, but keep sample for hackathon if <100MB)
+# data/chembl_36.csv
+# Keeping sample_bioactivity.csv as it's small (100k rows ~20MB)
+
+# Models (Keep small models, exclude massive ones if any)
+# models/saved/*.h5
+
+# Streamlit
+.streamlit/secrets.toml
