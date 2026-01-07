@@ -5,8 +5,6 @@ BioInsight Lite is a machine learning application designed to explore chemical d
 
 ---
 
-## Deliverables
-
 ### 1. Jupyter Notebook
 **Location:** `notebooks/01_workflow.ipynb`
 
@@ -203,23 +201,8 @@ bioinsight_hackathon2/
 
 ---
 
-## Key Features
 
-✅ **End-to-End ML Pipeline:** From raw data to deployed model  
-✅ **Explainable AI:** SHAP integration for transparency  
-✅ **Interactive UI:** User-friendly Streamlit interface  
-✅ **Robust Preprocessing:** Consistent training/inference pipeline  
-✅ **Production-Ready:** Modular, documented, and scalable code  
 
----
 
-## Future Enhancements
-
-- Integration of molecular fingerprints (ECFP4)
-- Graph Neural Networks (GNNs) for 3D structure analysis
-- ADMET property prediction
-- Natural Language Querying (NLQ) with LLMs
-
----
 
 **Submission for Aragen Hackathon**
