@@ -53,32 +53,37 @@ def preprocess_data(df, scaler, encoders):
     # 2. Engineer
     df = engineer_features(df)
     
-    # 3. Scale (columns must match scaler training)
-    numeric_cols = getattr(scaler, 'feature_names_in_', None)
-    if numeric_cols is None:
-        numeric_cols = [
-            'mw_freebase', 'alogp', 'hba', 'hbd', 'psa', 'rtb',
-            'aromatic_rings', 'heavy_atoms', 'qed_weighted', 'num_ro5_violations',
-            'mw_logp_interaction', 'binding_efficiency', 'complexity_score'
-        ]
+    # 3. Scale - Use only the core features we know the model needs
+    # These are the features after engineering that the model actually uses
+    core_features = [
+        'mw_freebase', 'alogp', 'hba', 'hbd', 'psa', 'rtb',
+        'aromatic_rings', 'heavy_atoms', 'qed_weighted', 'num_ro5_violations',
+        'mw_logp_interaction', 'binding_efficiency', 'complexity_score'
+    ]
     
-    # Filter to only columns that exist in the current DataFrame
-    available_cols = [col for col in numeric_cols if col in df.columns]
-    
-    # If scaler expects more columns than we have, add them with defaults
-    for col in numeric_cols:
+    # Ensure all core features exist
+    for col in core_features:
         if col not in df.columns:
             df[col] = DEFAULTS.get(col, 0)
+        # Convert to numeric, coercing errors
+        df[col] = pd.to_numeric(df[col], errors='coerce').fillna(DEFAULTS.get(col, 0))
     
-    # Select only numeric columns (exclude any categorical columns that might have slipped through)
-    df_numeric = df[numeric_cols].select_dtypes(include=[np.number])
+    # Get the actual columns the scaler expects (if available)
+    scaler_cols = getattr(scaler, 'feature_names_in_', core_features)
     
-    # If some columns were filtered out as non-numeric, fill them with defaults
-    for col in numeric_cols:
-        if col not in df_numeric.columns:
-            df_numeric[col] = DEFAULTS.get(col, 0)
+    # Only use columns that exist in both our core features and scaler expectations
+    final_cols = [col for col in scaler_cols if col in core_features]
     
-    return scaler.transform(df_numeric)
+    # If scaler expects columns we don't have in core, add them with defaults
+    for col in scaler_cols:
+        if col not in df.columns:
+            df[col] = DEFAULTS.get(col, 0)
+        df[col] = pd.to_numeric(df[col], errors='coerce').fillna(DEFAULTS.get(col, 0))
+    
+    # Select in the exact order the scaler expects
+    df_for_scaling = df[list(scaler_cols)]
+    
+    return scaler.transform(df_for_scaling)
 
 def preprocess_input(input_dict, scaler, encoders):
     """Pipeline for single dictionary input."""
