@@ -29,7 +29,7 @@ Interactive web application with the following modules:
 
 **Run Command:**
 ```bash
-python3 -m streamlit run ui/Home.py
+https://aragen-hackathon-arpita.streamlit.app/
 ```
 
 
