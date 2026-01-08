@@ -150,8 +150,7 @@ bioinsight_hackathon2/
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/Arpitaa19/Assessment---Aragen.git
-   cd bioinsight_hackathon2
+   git clone https://github.com/Arpitaa19/Aragen.git
    ```
 
 2. **Install dependencies:**
@@ -161,7 +160,8 @@ bioinsight_hackathon2/
 
 3. **Run the Streamlit application:**
    ```bash
-   python3 -m streamlit run ui/Home.py
+   python -m streamlit run ui/Home.py
+
    ```
 
 4. **Access the Dashboard:**
